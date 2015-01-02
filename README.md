@@ -37,7 +37,7 @@ Right now [OpenResty](http://openresty.org/) looks appealing, but I'm open to wh
 
 # Goal
 
-As of now, Wed Dec 31 10:03:35 NZDT 2014, I'm daydreaming of the dumbest possible webserver, and the smartest possible database, to make a great JSON REST API.
+As of now, I'm daydreaming of the dumbest possible webserver, and the smartest possible database, to make a great JSON REST API.
 
 Every database call would be the same format:
 
