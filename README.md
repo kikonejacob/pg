@@ -32,7 +32,7 @@ Less intertwining.  Less complecting.  Less dependencies.  Double-down on the da
 
 PL/pgSQL is not as beautiful as Ruby, but by having all this inside the database, I can easily switch to whatever language/tech around it is best at the time.
 
-Right now [OpenResty](http://openresty.org/) looks appealing, but I'm open to whatever.  The API webserver doesn't have to do anything but map HTTP methods and URLs to PostgreSQL function calls, then directly pass the database response as an HTTP response.
+Right now [OpenResty](http://openresty.org/) and [Warp](http://www.stackage.org/package/warp) both look appealing, but I'm open to whatever.  The API webserver doesn't have to do anything but map HTTP methods and URLs to PostgreSQL function calls, then directly pass the database response as an HTTP response.
 
 
 # Goal
