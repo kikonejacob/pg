@@ -1,8 +1,7 @@
 SET client_min_messages TO ERROR;
 BEGIN;
-DROP SCHEMA IF EXISTS jsonupdate CASCADE;
-CREATE SCHEMA jsonupdate;
-SET search_path = jsonupdate;
+DROP SCHEMA IF EXISTS sivers CASCADE;
+CREATE SCHEMA sivers;
 
 -- example table for testing setting boolean, NULL, and NOW()
 
