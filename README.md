@@ -48,7 +48,7 @@ The webserver would just send the MIME type and JSON back as the response, even 
 I haven't tried this yet, but that's what these PostgreSQL experiments are leading towards.
 
 
-# For tese tests:
+# For these tests:
 
 `createuser -s sivers ; createdb -E UTF8 -O sivers sivers`
 
