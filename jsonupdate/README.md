@@ -18,3 +18,7 @@ If this is the best solution, so be it.  But looking for improvement suggestions
 
 As for the values, how to deal with NULL, NOW(), and non-string types?  Obviously, many people have tackled this problem before, so I don't need to reinvent the wheel.
 
+## TODO:
+
+Return updated record.  (What's the best way to do that?)
+

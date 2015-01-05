@@ -15,7 +15,8 @@ end
 
 class SqlTest < Minitest::Test
 	def test_regular_update
-		DB.exec_params("SELECT jsonupdate($1, $2, $3)", ['legends', 1, '{"name": "Dude", "alive": true, "birth_date": "1920-01-01"}'])
+		DB.exec_params("SELECT jsonupdate($1, $2, $3)",
+			['legends', 1, '{"name": "Dude", "alive": true, "birth_date": "1920-01-01"}'])
 		res = DB.exec("SELECT * FROM legends WHERE id = 1")
 		assert_equal 'Dude', res[0]['name']
 		assert_equal 't', res[0]['alive']
