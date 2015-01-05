@@ -57,12 +57,16 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER update_status BEFORE INSERT OR UPDATE ON projects FOR EACH ROW EXECUTE PROCEDURE update_status();
 
 -- Dates can't be set if previous sequential date is still NULL
+-- Dates can't be NULLed if next sequential date is NOT NULL
 CREATE FUNCTION dates_in_order() RETURNS TRIGGER AS $$
 BEGIN
 	IF (NEW.approved_at IS NOT NULL AND NEW.quoted_at IS NULL)
 		OR (NEW.started_at IS NOT NULL AND NEW.approved_at IS NULL)
-		OR (NEW.finished_at IS NOT NULL AND NEW.started_at IS NULL) THEN
-		RAISE 'dates_out_of_order';
+		OR (NEW.finished_at IS NOT NULL AND NEW.started_at IS NULL)
+		OR (NEW.started_at IS NULL AND NEW.finished_at IS NOT NULL)
+		OR (NEW.approved_at IS NULL AND NEW.started_at IS NOT NULL)
+		OR (NEW.quoted_at IS NULL AND NEW.approved_at IS NOT NULL)
+		THEN RAISE 'dates_out_of_order';
 	END IF;
 	RETURN NEW;
 END;
