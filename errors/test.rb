@@ -14,5 +14,8 @@ Minitest.after_run do
 end
 
 class SqlTest < Minitest::Test
+	def test_update
+		res = DB.exec_params("SELECT mime, js FROM update_country($1, $2)", [1, '{"code": "tH"}'])
+	end
 end
 
