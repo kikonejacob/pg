@@ -5,7 +5,7 @@ I'm learning and testing PostgreSQL features.
 Instead of always tying them into my big [d50b](https://github.com/50pop/d50b) database, it seemed better to keep experiments isolated with minimum context or baggage.
 
 
-# Reason
+# Context
 
 Very inspired by Rich Hickey's “[Simple Made Easy](http://www.infoq.com/presentations/Simple-Made-Easy)” talk. Especially these points:
 
