@@ -14,30 +14,6 @@ CREATE TABLE projects (
 	status varchar(8) not null default 'created'
 );
 
--- This approach ignores the "projects.status" field:
-CREATE FUNCTION project_status(project_id integer, OUT status text) AS $$
-DECLARE
-	project projects;
-BEGIN
-	SELECT * INTO project FROM projects WHERE id = project_id;
-	IF NOT FOUND THEN
-		return;
-	END IF;
-	IF project.quoted_at IS NULL THEN
-		status := 'created';
-	ELSIF project.approved_at IS NULL THEN
-		status := 'quoted';
-	ELSIF project.started_at IS NULL THEN
-		status := 'approved';
-	ELSIF project.finished_at IS NULL THEN
-		status := 'started';
-	ELSE
-		status := 'finished';
-	END IF;
-END;
-$$ LANGUAGE plpgsql;
-
--- This approach ignores the project_status() function. (I like this better for now.)
 CREATE FUNCTION update_status() RETURNS TRIGGER AS $$
 BEGIN
 	IF NEW.quoted_at IS NULL THEN
@@ -56,8 +32,8 @@ END;
 $$ LANGUAGE plpgsql;
 CREATE TRIGGER update_status BEFORE INSERT OR UPDATE ON projects FOR EACH ROW EXECUTE PROCEDURE update_status();
 
--- Dates can't be set if previous sequential date is still NULL
--- Dates can't be NULLed if next sequential date is NOT NULL
+-- Dates must always exist in this order:
+-- created_at, quoted_at, approved_at, started_at, finished_at
 CREATE FUNCTION dates_in_order() RETURNS TRIGGER AS $$
 BEGIN
 	IF (NEW.approved_at IS NOT NULL AND NEW.quoted_at IS NULL)

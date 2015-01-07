@@ -14,19 +14,6 @@ Minitest.after_run do
 end
 
 class SqlTest < Minitest::Test
-	def test_project_status
-		res = DB.exec_params("SELECT project_status(1)");
-		assert_equal 'created', res[0]['project_status']
-		res = DB.exec_params("SELECT project_status(2)");
-		assert_equal 'quoted', res[0]['project_status']
-		res = DB.exec_params("SELECT project_status(3)");
-		assert_equal 'approved', res[0]['project_status']
-		res = DB.exec_params("SELECT project_status(4)");
-		assert_equal 'started', res[0]['project_status']
-		res = DB.exec_params("SELECT project_status(5)");
-		assert_equal 'finished', res[0]['project_status']
-	end
-
 	def test_status_field
 		DB.exec("UPDATE projects SET quoted_at=NOW() WHERE id=1")
 		res = DB.exec("SELECT status FROM projects WHERE id=1")
