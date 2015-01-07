@@ -4,11 +4,7 @@ In Ruby, I'd have a method called 'status' that would dynamically return a strin
 
 What I liked about it is that it was indistinguishable from a regular table column.  I could call project.name, project.status, not caring that one was a database field and the other was generated on the fly.
 
-So - how to do that in PostgreSQL directly?
-
-* make it a function?
-* make it a field that is updated with triggers?
-* something else?
+So - how to do that in PostgreSQL directly?  A field that is updated with triggers?
 
 
 ## status: maybe finished?
