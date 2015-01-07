@@ -38,7 +38,7 @@ So really it's just four functions, each returning a new money amount:
 * sum_money(rows_of_money)
 * exchange_money(money, new_currency)
 
-Since Bitcoin (BTC) 
+Since Bitcoin (BTC) deals in tiny (0.00000001) amounts, no need for rounding.
 
 ## Type needed?
 
