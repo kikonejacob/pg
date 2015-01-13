@@ -167,3 +167,5 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
+
+COMMIT;
