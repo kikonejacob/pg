@@ -54,7 +54,6 @@ CREATE FUNCTION update_country(integer, json, OUT mime text, OUT js text) AS $$
 DECLARE
 	keyval record;
 	tempval text;
-	r2 record;
 	err_code text;
 	err_msg text;
 	err_detail text;
@@ -66,9 +65,7 @@ BEGIN
 		|| ' = ' || quote_literal(tempval) || ' WHERE id=' || $1;
 	END LOOP;
 	-- Instead of UPDATE returning "not found" for 0 update, this will do it:
-	SELECT * INTO r2 FROM get_country($1); -- TODO: return values directly into mime & js
-	mime := r2.mime;
-	js := r2.js;
+	SELECT x.mime, x.js INTO mime, js FROM get_country($1) x;
 EXCEPTION
 	WHEN OTHERS THEN GET STACKED DIAGNOSTICS
 		err_code = RETURNED_SQLSTATE,
@@ -88,7 +85,6 @@ CREATE FUNCTION update_city(integer, json, OUT mime text, OUT js text) AS $$
 DECLARE
 	keyval record;
 	tempval text;
-	r2 record;
 	err_code text;
 	err_msg text;
 	err_detail text;
@@ -99,9 +95,7 @@ BEGIN
 		EXECUTE 'UPDATE cities SET ' || quote_ident(keyval.key)
 		|| ' = ' || quote_literal(tempval) || ' WHERE id=' || $1;
 	END LOOP;
-	SELECT * INTO r2 FROM get_city($1); -- TODO: return values directly into mime & js
-	mime := r2.mime;
-	js := r2.js;
+	SELECT x.mime, x.js INTO mime, js FROM get_city($1) x;
 EXCEPTION
 	WHEN OTHERS THEN GET STACKED DIAGNOSTICS
 		err_code = RETURNED_SQLSTATE,
@@ -118,15 +112,12 @@ $$ LANGUAGE plpgsql;
 -- etc…
 CREATE FUNCTION delete_country(integer, OUT mime text, OUT js text) AS $$
 DECLARE
-	r2 record;
 	err_code text;
 	err_msg text;
 	err_detail text;
 	err_context text;
 BEGIN
-	SELECT * INTO r2 FROM get_country($1); -- TODO: return values directly into mime & js
-	mime := r2.mime;
-	js := r2.js;
+	SELECT x.mime, x.js INTO mime, js FROM get_country($1) x;
 	EXECUTE 'DELETE FROM countries WHERE id=' || $1;
 EXCEPTION
 	WHEN OTHERS THEN GET STACKED DIAGNOSTICS
@@ -144,15 +135,12 @@ $$ LANGUAGE plpgsql;
 -- etc…
 CREATE FUNCTION delete_city(integer, OUT mime text, OUT js text) AS $$
 DECLARE
-	r2 record;
 	err_code text;
 	err_msg text;
 	err_detail text;
 	err_context text;
 BEGIN
-	SELECT * INTO r2 FROM get_city($1); -- TODO: return values directly into mime & js
-	mime := r2.mime;
-	js := r2.js;
+	SELECT x.mime, x.js INTO mime, js FROM get_city($1) x;
 	EXECUTE 'DELETE FROM cities WHERE id=' || $1;
 EXCEPTION
 	WHEN OTHERS THEN GET STACKED DIAGNOSTICS
