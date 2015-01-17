@@ -86,6 +86,10 @@ class SqlTest < Minitest::Test
 		assert_equal 3, js['id']
 		assert_equal 'sugar is sticky', js['concept']
 		assert_equal %w(flavor), js['tags']
+		res = DB.exec("SELECT mime, js FROM update_concept(999, 'should return 404')")
+		assert_equal 'application/problem+json', res[0]['mime']
+		js = JSON.parse(res[0]['js'])
+		assert_equal 'Not Found', js['title']
 	end
 
 	def test_delete_concept
@@ -97,6 +101,32 @@ class SqlTest < Minitest::Test
 		assert_equal 'application/problem+json', res[0]['mime']
 		js = JSON.parse(res[0]['js'])
 		assert_equal 'Not Found', js['title']
+	end
+
+	def test_update_err
+		res = DB.exec("SELECT mime, js FROM update_concept(1, '')")
+		assert_equal 'application/problem+json', res[0]['mime']
+		js = JSON.parse(res[0]['js'])
+		assert_match /23514$/, js['type']
+		assert_match /not_empty/, js['title']
+		assert_match /^Failing row/, js['detail']
+		res = DB.exec("SELECT mime, js FROM update_concept(1, NULL)")
+		js = JSON.parse(res[0]['js'])
+		assert_match /23502$/, js['type']
+		assert_match /not-null/, js['title']
+		assert_match /^Failing row/, js['detail']
+	end
+
+	def test_create_err
+		res = DB.exec("SELECT mime, js FROM create_concept('roses are red')")
+		js = JSON.parse(res[0]['js'])
+		assert_match /23505$/, js['type']
+		assert_match /unique constraint/, js['title']
+		res = DB.exec("SELECT mime, js FROM create_concept(NULL)")
+		js = JSON.parse(res[0]['js'])
+		assert_match /23502$/, js['type']
+		assert_match /not-null/, js['title']
+		assert_match /^Failing row/, js['detail']
 	end
 end
 

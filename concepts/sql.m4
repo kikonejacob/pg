@@ -11,7 +11,7 @@ define([_ERRVARS], [
 	err_detail text;
 	err_context text;
 ])dnl
-define([_ERRJSON], [
+define([_ERRCATCH], [
 EXCEPTION
 	WHEN OTHERS THEN GET STACKED DIAGNOSTICS
 		err_code = RETURNED_SQLSTATE,

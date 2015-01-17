@@ -6,7 +6,7 @@ CREATE SCHEMA sivers;
 CREATE TABLE concepts (
 	id serial primary key,
 	created_at date not null default current_date,
-	concept text not null constraint not_empty check (length(concept) > 0)
+	concept text not null unique constraint not_empty check (length(concept) > 0)
 );
 
 CREATE TABLE tags(

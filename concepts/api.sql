@@ -17,17 +17,22 @@ $$ LANGUAGE plpgsql;
 CREATE FUNCTION create_concept(text, OUT mime text, OUT js text) AS $$
 DECLARE
 	new_id integer;
+_ERRVARS
 BEGIN
 	INSERT INTO concepts(concept) VALUES ($1) RETURNING id INTO new_id;
 	SELECT x.mime, x.js INTO mime, js FROM get_concept(new_id) x;
+_ERRCATCH
 END;
 $$ LANGUAGE plpgsql;
 
 -- USAGE: SELECT mime, js FROM update_concept(123, 'new text here');
 CREATE FUNCTION update_concept(integer, text, OUT mime text, OUT js text) AS $$
+DECLARE
+_ERRVARS
 BEGIN
 	UPDATE concepts SET concept = $2 WHERE id = $1;
 	SELECT x.mime, x.js INTO mime, js FROM get_concept($1) x;
+_ERRCATCH
 END;
 $$ LANGUAGE plpgsql;
 

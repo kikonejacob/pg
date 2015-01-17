@@ -6,7 +6,7 @@ CREATE SCHEMA sivers;
 CREATE TABLE concepts (
 	id serial primary key,
 	created_at date not null default current_date,
-	concept text not null constraint not_empty check (length(concept) > 0)
+	concept text not null unique constraint not_empty check (length(concept) > 0)
 );
 
 CREATE TABLE tags(
@@ -106,17 +106,54 @@ $$ LANGUAGE plpgsql;
 CREATE FUNCTION create_concept(text, OUT mime text, OUT js text) AS $$
 DECLARE
 	new_id integer;
+
+	err_code text;
+	err_msg text;
+	err_detail text;
+	err_context text;
+
 BEGIN
 	INSERT INTO concepts(concept) VALUES ($1) RETURNING id INTO new_id;
 	SELECT x.mime, x.js INTO mime, js FROM get_concept(new_id) x;
+
+EXCEPTION
+	WHEN OTHERS THEN GET STACKED DIAGNOSTICS
+		err_code = RETURNED_SQLSTATE,
+		err_msg = MESSAGE_TEXT,
+		err_detail = PG_EXCEPTION_DETAIL,
+		err_context = PG_EXCEPTION_CONTEXT;
+	mime := 'application/problem+json';
+	js := '{"type": ' || to_json('http://www.postgresql.org/docs/9.3/static/errcodes-appendix.html#' || err_code)
+		|| ', "title": ' || to_json(err_msg)
+		|| ', "detail": ' || to_json(err_detail || err_context) || '}';
+
 END;
 $$ LANGUAGE plpgsql;
 
 -- USAGE: SELECT mime, js FROM update_concept(123, 'new text here');
 CREATE FUNCTION update_concept(integer, text, OUT mime text, OUT js text) AS $$
+DECLARE
+
+	err_code text;
+	err_msg text;
+	err_detail text;
+	err_context text;
+
 BEGIN
 	UPDATE concepts SET concept = $2 WHERE id = $1;
 	SELECT x.mime, x.js INTO mime, js FROM get_concept($1) x;
+
+EXCEPTION
+	WHEN OTHERS THEN GET STACKED DIAGNOSTICS
+		err_code = RETURNED_SQLSTATE,
+		err_msg = MESSAGE_TEXT,
+		err_detail = PG_EXCEPTION_DETAIL,
+		err_context = PG_EXCEPTION_CONTEXT;
+	mime := 'application/problem+json';
+	js := '{"type": ' || to_json('http://www.postgresql.org/docs/9.3/static/errcodes-appendix.html#' || err_code)
+		|| ', "title": ' || to_json(err_msg)
+		|| ', "detail": ' || to_json(err_detail || err_context) || '}';
+
 END;
 $$ LANGUAGE plpgsql;
 
