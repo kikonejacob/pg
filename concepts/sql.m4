@@ -1,17 +1,17 @@
-changequote([, ])dnl
-define([_NOTFOUND], [
+changequote(«, »)dnl
+define(«NOTFOUND», «
 	IF js IS NULL THEN
 		mime := 'application/problem+json';
 		js := '{"type": "about:blank", "title": "Not Found", "status": 404}';
 	END IF;
-])dnl
-define([_ERRVARS], [
+»)dnl
+define(«ERRVARS», «
 	err_code text;
 	err_msg text;
 	err_detail text;
 	err_context text;
-])dnl
-define([_ERRCATCH], [
+»)dnl
+define(«ERRCATCH», «
 EXCEPTION
 	WHEN OTHERS THEN GET STACKED DIAGNOSTICS
 		err_code = RETURNED_SQLSTATE,
@@ -22,8 +22,8 @@ EXCEPTION
 	js := '{"type": ' || to_json('http://www.postgresql.org/docs/9.3/static/errcodes-appendix.html#' || err_code)
 		|| ', "title": ' || to_json(err_msg)
 		|| ', "detail": ' || to_json(err_detail || err_context) || '}';
-])dnl
-include([schema.sql])dnl
-include([functions.sql])dnl
-include([fixtures.sql])dnl
-include([api.sql])dnl
+»)dnl
+include(«schema.sql»)dnl
+include(«functions.sql»)dnl
+include(«fixtures.sql»)dnl
+include(«api.sql»)dnl

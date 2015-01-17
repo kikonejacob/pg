@@ -9,7 +9,7 @@ BEGIN
 			(SELECT array_to_json(array(
 				SELECT tag FROM tags WHERE concept_id = $1)) AS tags)
 		FROM concepts WHERE id = $1) co;
-_NOTFOUND
+NOTFOUND
 END;
 $$ LANGUAGE plpgsql;
 
@@ -17,22 +17,22 @@ $$ LANGUAGE plpgsql;
 CREATE FUNCTION create_concept(text, OUT mime text, OUT js text) AS $$
 DECLARE
 	new_id integer;
-_ERRVARS
+ERRVARS
 BEGIN
 	INSERT INTO concepts(concept) VALUES ($1) RETURNING id INTO new_id;
 	SELECT x.mime, x.js INTO mime, js FROM get_concept(new_id) x;
-_ERRCATCH
+ERRCATCH
 END;
 $$ LANGUAGE plpgsql;
 
 -- USAGE: SELECT mime, js FROM update_concept(123, 'new text here');
 CREATE FUNCTION update_concept(integer, text, OUT mime text, OUT js text) AS $$
 DECLARE
-_ERRVARS
+ERRVARS
 BEGIN
 	UPDATE concepts SET concept = $2 WHERE id = $1;
 	SELECT x.mime, x.js INTO mime, js FROM get_concept($1) x;
-_ERRCATCH
+ERRCATCH
 END;
 $$ LANGUAGE plpgsql;
 
@@ -47,23 +47,23 @@ $$ LANGUAGE plpgsql;
 -- USAGE: SELECT mime, js FROM tag_concept(123, 'newtag');
 CREATE FUNCTION tag_concept(integer, text, OUT mime text, OUT js text) AS $$
 DECLARE
-_ERRVARS
+ERRVARS
 BEGIN
 	INSERT INTO tags (concept_id, tag) VALUES ($1, $2);
 	SELECT x.mime, x.js INTO mime, js FROM get_concept($1) x;
-_ERRCATCH
+ERRCATCH
 END;
 $$ LANGUAGE plpgsql;
 
 -- USAGE: SELECT mime, js FROM tag_concepts(13, 24, 'newtag');
 CREATE FUNCTION tag_concepts(integer, integer, text, OUT mime text, OUT js text) AS $$
 DECLARE
-_ERRVARS
+ERRVARS
 BEGIN
 	INSERT INTO tags (concept_id, tag) VALUES ($1, $3);
 	INSERT INTO tags (concept_id, tag) VALUES ($2, $3);
 	-- TODO: probably don't need tag_both
-_ERRCATCH
+ERRCATCH
 END;
 $$ LANGUAGE plpgsql;
 
