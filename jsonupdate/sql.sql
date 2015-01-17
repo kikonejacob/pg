@@ -17,17 +17,17 @@ INSERT INTO legends (name, birth_date, alive) VALUES ('Aesop', NULL, false);
 -- yes, primary_key will always be integer
 CREATE FUNCTION jsonupdate(table_name text, primary_key integer, new_values json) RETURNS void AS $$
 DECLARE
-	keyval record;
+	key record;
 	tempval text;
 BEGIN
-	FOR keyval IN SELECT key, value FROM json_each(new_values) LOOP
-		tempval := btrim(keyval.value::text, '"'); -- better way to remove the quotes JSON adds?
+	FOR key IN SELECT k FROM json_object_keys(new_values) AS k LOOP
+		tempval := new_values->>key.k;
 		IF tempval != 'NULL' THEN -- better way to handle NULL?
 			tempval := quote_literal(tempval);
 		END IF;
 		-- benefits to making multi-column UPDATE statement, instead of many separate ones?
 		EXECUTE 'UPDATE ' || quote_ident(table_name)
-		|| ' SET ' || quote_ident(keyval.key) || ' = ' || tempval
+		|| ' SET ' || quote_ident(key.k) || ' = ' || tempval
 		|| ' WHERE id=' || primary_key;
 	END LOOP;
 END;
