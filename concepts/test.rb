@@ -1,5 +1,6 @@
 require 'pg'
 require 'minitest/autorun'
+require 'json'
 
 DB = PG::Connection.new(dbname: 'sivers', user: 'sivers')
 SQL = File.read('sql.sql')
@@ -49,6 +50,15 @@ class SqlTest < Minitest::Test
 		assert_equal 5, res.ntuples
 		assert res.find {|x| x['concept_id'] == '2' && x['tag'] == 'great' }
 		assert res.find {|x| x['concept_id'] == '3' && x['tag'] == 'great' }
+	end
+
+	def test_get_concept
+		res = DB.exec("SELECT mime, js FROM get_concept(1)")
+		js = JSON.parse(res[0]['js'])
+		assert_equal 'application/json', res[0]['mime']
+		assert_equal %w(id created_at concept tags), js.keys
+		assert_equal %w(color flower), js['tags'].sort
+		assert_equal 'roses are red', js['concept']
 	end
 end
 
