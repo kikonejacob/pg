@@ -10,7 +10,7 @@ CREATE TABLE concepts (
 );
 
 CREATE TABLE tags(
-	concept_id integer not null references concepts(id),
+	concept_id integer not null references concepts(id) on delete cascade,
 	tag varchar(32) not null constraint not_empty check (length(tag) > 0),
 	primary key (concept_id, tag)
 );
@@ -21,8 +21,8 @@ CREATE TABLE tags(
 CREATE TABLE pairings (
 	id serial primary key,
 	created_at date not null default current_date,
-	concept1_id integer not null references concepts(id),
-	concept2_id integer not null references concepts(id),
+	concept1_id integer not null references concepts(id) on delete cascade,
+	concept2_id integer not null references concepts(id) on delete cascade,
 	-- unique (concept1_id, concept2_id),
 	thoughts text
 );
@@ -81,4 +81,14 @@ INSERT INTO tags VALUES (2, 'color');
 INSERT INTO tags VALUES (3, 'flavor');
 INSERT INTO pairings (concept1_id, concept2_id, thoughts) VALUES (1, 2, 'describing flowers');
 COMMIT;
+
+CREATE FUNCTION get_concept(integer, OUT mime text, OUT js text) AS $$
+BEGIN
+	mime := 'application/json';
+	SELECT row_to_json(co) INTO js FROM
+		(SELECT id, created_at, concept, (SELECT json_agg(t) FROM
+			(SELECT tag FROM tags WHERE concept_id = $1) t) AS tags
+		FROM concepts WHERE id = $1) co;
+END;
+$$ LANGUAGE plpgsql;
 
