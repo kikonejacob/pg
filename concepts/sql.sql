@@ -51,7 +51,7 @@ CREATE TRIGGER clean_tag BEFORE INSERT OR UPDATE OF tag ON tags FOR EACH ROW EXE
 -- one way is to just randomly try some numbers until no match found
 -- another way is a left join where pairings.*_id is null, then select from those
 -- how to make sure it isn't just a pairing that's done in another 2<1 order?
-CREATE FUNCTION create_pairing() RETURNS SETOF pairings AS $$
+CREATE FUNCTION new_pairing() RETURNS SETOF pairings AS $$
 DECLARE
 	id1 integer;
 	id2 integer;
@@ -61,6 +61,21 @@ BEGIN
 	RETURN QUERY INSERT INTO pairings (concept1_id, concept2_id) VALUES (id1, id2) RETURNING *;
 END;
 $$ LANGUAGE plpgsql;
+
+-- SELECT * FROM pairing_concepts WHERE id=1;
+--id| created_at |      thoughts      |                             concepts                              
+----+------------+--------------------+-------------------------------------------------------------------
+--1 | 2015-01-18 | describing flowers | [{"id":1,"concept":"roses are red","tags":["flower","color"]},   +
+--  |            |                    |  {"id":2,"concept":"violets are blue","tags":["flower","color"]}]
+CREATE VIEW pairing_concepts AS
+	SELECT id, created_at, thoughts,
+		(SELECT json_agg(t) FROM
+			(SELECT concepts.id, concept,
+				ARRAY(SELECT tag FROM tags WHERE concept_id=concepts.id) AS tags
+			FROM concepts WHERE id IN (concept1_id, concept2_id)
+			ORDER BY id ASC)
+		t) AS concepts
+	FROM pairings;
 
 BEGIN;
 INSERT INTO concepts (concept) VALUES ('roses are red');
@@ -95,7 +110,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- give it an array of concept.ids.  Keep JSON format same as get_concept, but in array.
--- If none found, gives same 404 error. TODO: return empty array
+-- If none found, js is empty array
 CREATE FUNCTION get_concepts(integer[], OUT mime text, OUT js text) AS $$
 BEGIN
 	mime := 'application/json';
@@ -228,6 +243,8 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
+-- USAGE: SELECT mime, js FROM concepts_tagged('tagname');
+-- Returns array of concepts or empty array if none found.
 CREATE FUNCTION concepts_tagged(text, OUT mime text, OUT js text) AS $$
 DECLARE
 	ids integer[];
@@ -236,4 +253,66 @@ BEGIN
 	SELECT x.mime, x.js INTO mime, js FROM get_concepts(ids) x;
 END;
 $$ LANGUAGE plpgsql;
+
+-- USAGE: SELECT mime, js FROM get_pairing(123);
+-- {"id":1,"created_at":"2015-01-17","thoughts":"paired thoughts here","concepts":[{array of concepts with keys: id, concept, tags}]}
+CREATE FUNCTION get_pairing(integer, OUT mime text, OUT js text) AS $$
+BEGIN
+	mime := 'application/json';
+	SELECT row_to_json(r) INTO js FROM
+		(SELECT * FROM pairing_concepts WHERE id = $1) r;
+
+	IF js IS NULL THEN
+		mime := 'application/problem+json';
+		js := '{"type": "about:blank", "title": "Not Found", "status": 404}';
+	END IF;
+
+END;
+$$ LANGUAGE plpgsql;
+
+-- USAGE: SELECT mime, js FROM create_pairing();
+CREATE FUNCTION create_pairing(OUT mime text, OUT js text) AS $$
+DECLARE
+	pid integer;
+BEGIN
+	SELECT id INTO pid FROM new_pairing();
+	SELECT x.mime, x.js INTO mime, js FROM get_pairing(pid) x;
+END;
+$$ LANGUAGE plpgsql;
+
+-- USAGE: SELECT mime, js FROM update_pairing(3, 'new thoughts here');
+CREATE FUNCTION update_pairing(integer, text, OUT mime text, OUT js text) AS $$
+DECLARE
+
+	err_code text;
+	err_msg text;
+	err_detail text;
+	err_context text;
+
+BEGIN
+	UPDATE pairings SET thoughts = $2 WHERE id = $1;
+	SELECT x.mime, x.js INTO mime, js FROM get_pairing($1) x;
+
+EXCEPTION
+	WHEN OTHERS THEN GET STACKED DIAGNOSTICS
+		err_code = RETURNED_SQLSTATE,
+		err_msg = MESSAGE_TEXT,
+		err_detail = PG_EXCEPTION_DETAIL,
+		err_context = PG_EXCEPTION_CONTEXT;
+	mime := 'application/problem+json';
+	js := '{"type": ' || to_json('http://www.postgresql.org/docs/9.3/static/errcodes-appendix.html#' || err_code)
+		|| ', "title": ' || to_json(err_msg)
+		|| ', "detail": ' || to_json(err_detail || err_context) || '}';
+
+END;
+$$ LANGUAGE plpgsql;
+
+-- USAGE: SELECT mime, js FROM delete_pairing(123);
+CREATE FUNCTION delete_pairing(integer, OUT mime text, OUT js text) AS $$
+BEGIN
+	SELECT x.mime, x.js INTO mime, js FROM get_pairing($1) x;
+	DELETE FROM pairings WHERE id = $1;
+END;
+$$ LANGUAGE plpgsql;
+
 

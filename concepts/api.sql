@@ -83,6 +83,8 @@ ERRCATCH
 END;
 $$ LANGUAGE plpgsql;
 
+-- USAGE: SELECT mime, js FROM concepts_tagged('tagname');
+-- Returns array of concepts or empty array if none found.
 CREATE FUNCTION concepts_tagged(text, OUT mime text, OUT js text) AS $$
 DECLARE
 	ids integer[];
@@ -91,4 +93,46 @@ BEGIN
 	SELECT x.mime, x.js INTO mime, js FROM get_concepts(ids) x;
 END;
 $$ LANGUAGE plpgsql;
+
+-- USAGE: SELECT mime, js FROM get_pairing(123);
+-- {"id":1,"created_at":"2015-01-17","thoughts":"paired thoughts here","concepts":[{array of concepts with keys: id, concept, tags}]}
+CREATE FUNCTION get_pairing(integer, OUT mime text, OUT js text) AS $$
+BEGIN
+	mime := 'application/json';
+	SELECT row_to_json(r) INTO js FROM
+		(SELECT * FROM pairing_concepts WHERE id = $1) r;
+NOTFOUND
+END;
+$$ LANGUAGE plpgsql;
+
+-- USAGE: SELECT mime, js FROM create_pairing();
+-- TODO: what to do when there are no pairings left?
+CREATE FUNCTION create_pairing(OUT mime text, OUT js text) AS $$
+DECLARE
+	pid integer;
+BEGIN
+	SELECT id INTO pid FROM new_pairing();
+	SELECT x.mime, x.js INTO mime, js FROM get_pairing(pid) x;
+END;
+$$ LANGUAGE plpgsql;
+
+-- USAGE: SELECT mime, js FROM update_pairing(3, 'new thoughts here');
+CREATE FUNCTION update_pairing(integer, text, OUT mime text, OUT js text) AS $$
+DECLARE
+ERRVARS
+BEGIN
+	UPDATE pairings SET thoughts = $2 WHERE id = $1;
+	SELECT x.mime, x.js INTO mime, js FROM get_pairing($1) x;
+ERRCATCH
+END;
+$$ LANGUAGE plpgsql;
+
+-- USAGE: SELECT mime, js FROM delete_pairing(123);
+CREATE FUNCTION delete_pairing(integer, OUT mime text, OUT js text) AS $$
+BEGIN
+	SELECT x.mime, x.js INTO mime, js FROM get_pairing($1) x;
+	DELETE FROM pairings WHERE id = $1;
+END;
+$$ LANGUAGE plpgsql;
+
 

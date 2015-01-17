@@ -38,8 +38,8 @@ class SqlTest < Minitest::Test
 		assert_equal 'bang', res[0]['tag']
 	end
 
-	def test_create_pairing
-		res = DB.exec("SELECT * FROM create_pairing()")
+	def test_new_pairing
+		res = DB.exec("SELECT * FROM new_pairing()")
 		assert res[0]['id'].to_i > 1
 		assert res[0]['concept1_id'].to_i > 0
 		assert res[0]['concept2_id'].to_i > 0
@@ -164,5 +164,51 @@ class SqlTest < Minitest::Test
 		assert_equal %w{color flower}, js[0]['tags'].sort
 		assert_equal %w{color flower}, js[1]['tags'].sort
 	end
+
+	def test_get_pairing
+		res = DB.exec("SELECT * FROM get_pairing(1)")
+		assert_equal 'application/json', res[0]['mime']
+		js = JSON.parse(res[0]['js'])
+		assert_equal 1, js['id']
+		assert_match /201[0-9]-[0-9]{2}-[0-9]{2}/, js['created_at']
+		assert_equal 'describing flowers', js['thoughts']
+		assert_instance_of Array, js['concepts']
+		assert_equal 2, js['concepts'].size
+		c = js['concepts'][0]
+		assert_equal 1, c['id']
+		assert_equal 'roses are red', c['concept']
+		assert_equal %w(color flower), c['tags'].sort
+		c = js['concepts'][1]
+		assert_equal 2, c['id']
+		assert_equal 'violets are blue', c['concept']
+		assert_equal %w(color flower), c['tags'].sort
+	end
+
+	def test_create_pairing
+		res = DB.exec("SELECT * FROM create_pairing()")
+		js = JSON.parse(res[0]['js'])
+		assert_equal 2, js['id']
+		assert_match /201[0-9]-[0-9]{2}-[0-9]{2}/, js['created_at']
+		assert_nil js['thoughts']
+		assert_instance_of Array, js['concepts']
+		assert_equal 2, js['concepts'].size
+	end
+
+	def test_update_pairing
+		res = DB.exec("SELECT * FROM update_pairing(1, 'new thoughts')")
+		js = JSON.parse(res[0]['js'])
+		assert_equal 'new thoughts', js['thoughts']
+	end
+
+	def test_delete_pairing
+		res = DB.exec("SELECT * FROM delete_pairing(1)")
+		js = JSON.parse(res[0]['js'])
+		assert_equal 'describing flowers', js['thoughts']
+		res = DB.exec("SELECT * FROM delete_pairing(1)")
+		assert_equal 'application/problem+json', res[0]['mime']
+		js = JSON.parse(res[0]['js'])
+		assert_equal 'Not Found', js['title']
+	end
+
 end
 

@@ -20,7 +20,7 @@ CREATE TRIGGER clean_tag BEFORE INSERT OR UPDATE OF tag ON tags FOR EACH ROW EXE
 -- one way is to just randomly try some numbers until no match found
 -- another way is a left join where pairings.*_id is null, then select from those
 -- how to make sure it isn't just a pairing that's done in another 2<1 order?
-CREATE FUNCTION create_pairing() RETURNS SETOF pairings AS $$
+CREATE FUNCTION new_pairing() RETURNS SETOF pairings AS $$
 DECLARE
 	id1 integer;
 	id2 integer;
@@ -30,4 +30,19 @@ BEGIN
 	RETURN QUERY INSERT INTO pairings (concept1_id, concept2_id) VALUES (id1, id2) RETURNING *;
 END;
 $$ LANGUAGE plpgsql;
+
+-- SELECT * FROM pairing_concepts WHERE id=1;
+--id| created_at |      thoughts      |                             concepts                              
+----+------------+--------------------+-------------------------------------------------------------------
+--1 | 2015-01-18 | describing flowers | [{"id":1,"concept":"roses are red","tags":["flower","color"]},   +
+--  |            |                    |  {"id":2,"concept":"violets are blue","tags":["flower","color"]}]
+CREATE VIEW pairing_concepts AS
+	SELECT id, created_at, thoughts,
+		(SELECT json_agg(t) FROM
+			(SELECT concepts.id, concept,
+				ARRAY(SELECT tag FROM tags WHERE concept_id=concepts.id) AS tags
+			FROM concepts WHERE id IN (concept1_id, concept2_id)
+			ORDER BY id ASC)
+		t) AS concepts
+	FROM pairings;
 
