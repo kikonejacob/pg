@@ -14,8 +14,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- give it an array of concept.ids.  Keep JSON format same as get_concept, but in array.
--- If none found, gives same 404 error. TODO: return empty array
-CREATE FUNCTION get_concepts(int[], OUT mime text, OUT js text) AS $$
+-- If none found, js is empty array
+CREATE FUNCTION get_concepts(integer[], OUT mime text, OUT js text) AS $$
 BEGIN
 	mime := 'application/json';
 	SELECT json_agg(co) INTO js FROM
@@ -23,7 +23,9 @@ BEGIN
 			(SELECT array_to_json(array(
 				SELECT tag FROM tags WHERE concept_id = concepts.id)) AS tags)
 		FROM concepts WHERE id = ANY($1) ORDER BY id ASC) co;
-NOTFOUND
+	IF js IS NULL THEN
+		js := array_to_json(array[]::text[]);
+	END IF;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -78,6 +80,15 @@ BEGIN
 	INSERT INTO tags (concept_id, tag) VALUES ($2, $3);
 	SELECT x.mime, x.js INTO mime, js FROM get_concepts(array[$1, $2]) x;
 ERRCATCH
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE FUNCTION concepts_tagged(text, OUT mime text, OUT js text) AS $$
+DECLARE
+	ids integer[];
+BEGIN
+	SELECT array(SELECT concept_id FROM tags WHERE tag=$1) INTO ids;
+	SELECT x.mime, x.js INTO mime, js FROM get_concepts(ids) x;
 END;
 $$ LANGUAGE plpgsql;
 

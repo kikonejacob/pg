@@ -139,9 +139,8 @@ class SqlTest < Minitest::Test
 		assert_equal %w{color flower}, js[0]['tags'].sort
 		assert_equal %w{flavor}, js[1]['tags']
 		res = DB.exec("SELECT * FROM get_concepts(array[99, 123])")
-		assert_equal 'application/problem+json', res[0]['mime']
-		js = JSON.parse(res[0]['js'])
-		assert_equal 'Not Found', js['title']
+		assert_equal 'application/json', res[0]['mime']
+		assert_equal [], JSON.parse(res[0]['js'])
 	end
 
 	def test_tag_concepts
@@ -153,6 +152,17 @@ class SqlTest < Minitest::Test
 		assert_equal 3, js[1]['id']
 		assert_equal %w{color flower noroses}, js[0]['tags'].sort
 		assert_equal %w{flavor noroses}, js[1]['tags']
+	end
+
+	def test_concepts_tagged
+		res = DB.exec("SELECT * FROM concepts_tagged('flower')")
+		js = JSON.parse(res[0]['js'])
+		assert_instance_of Array, js
+		assert_equal 2, js.size
+		assert_equal 1, js[0]['id']
+		assert_equal 2, js[1]['id']
+		assert_equal %w{color flower}, js[0]['tags'].sort
+		assert_equal %w{color flower}, js[1]['tags'].sort
 	end
 end
 

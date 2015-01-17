@@ -62,14 +62,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- insert the same tag for both concept ids
-CREATE FUNCTION tag_both(integer, integer, text) RETURNS SETOF tags AS $$
-BEGIN
-	INSERT INTO tags VALUES ($1, $3);
-	INSERT INTO tags VALUES ($2, $3);
-	RETURN QUERY SELECT * FROM tags WHERE concept_id IN ($1, $2);
-END;
-$$ LANGUAGE plpgsql;
 BEGIN;
 INSERT INTO concepts (concept) VALUES ('roses are red');
 INSERT INTO concepts (concept) VALUES ('violets are blue');
@@ -104,7 +96,7 @@ $$ LANGUAGE plpgsql;
 
 -- give it an array of concept.ids.  Keep JSON format same as get_concept, but in array.
 -- If none found, gives same 404 error. TODO: return empty array
-CREATE FUNCTION get_concepts(int[], OUT mime text, OUT js text) AS $$
+CREATE FUNCTION get_concepts(integer[], OUT mime text, OUT js text) AS $$
 BEGIN
 	mime := 'application/json';
 	SELECT json_agg(co) INTO js FROM
@@ -112,12 +104,9 @@ BEGIN
 			(SELECT array_to_json(array(
 				SELECT tag FROM tags WHERE concept_id = concepts.id)) AS tags)
 		FROM concepts WHERE id = ANY($1) ORDER BY id ASC) co;
-
 	IF js IS NULL THEN
-		mime := 'application/problem+json';
-		js := '{"type": "about:blank", "title": "Not Found", "status": 404}';
+		js := array_to_json(array[]::text[]);
 	END IF;
-
 END;
 $$ LANGUAGE plpgsql;
 
@@ -236,6 +225,15 @@ EXCEPTION
 		|| ', "title": ' || to_json(err_msg)
 		|| ', "detail": ' || to_json(err_detail || err_context) || '}';
 
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE FUNCTION concepts_tagged(text, OUT mime text, OUT js text) AS $$
+DECLARE
+	ids integer[];
+BEGIN
+	SELECT array(SELECT concept_id FROM tags WHERE tag=$1) INTO ids;
+	SELECT x.mime, x.js INTO mime, js FROM get_concepts(ids) x;
 END;
 $$ LANGUAGE plpgsql;
 
