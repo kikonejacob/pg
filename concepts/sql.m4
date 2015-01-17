@@ -24,6 +24,7 @@ EXCEPTION
 		|| ', "detail": ' || to_json(err_detail || err_context) || '}';
 »)dnl
 include(«schema.sql»)dnl
+include(«views.sql»)dnl
 include(«functions.sql»)dnl
-include(«fixtures.sql»)dnl
 include(«api.sql»)dnl
+include(«fixtures.sql»)dnl

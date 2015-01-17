@@ -29,6 +29,30 @@ CREATE TABLE pairings (
 
 COMMIT;
 
+-- SELECT * FROM concept_tags WHERE id = 1;
+--id| created_at |    concept    |      tags      
+----+------------+---------------+----------------
+--1 | 2015-01-18 | roses are red | {flower,color}
+CREATE VIEW concept_tags AS
+	SELECT id, created_at, concept,
+		array(SELECT tag FROM tags WHERE concept_id = concepts.id) AS tags
+	FROM concepts;
+
+-- SELECT * FROM pairing_concepts WHERE id=1;
+--id| created_at |      thoughts      |                             concepts                              
+----+------------+--------------------+-------------------------------------------------------------------
+--1 | 2015-01-18 | describing flowers | [{"id":1,"concept":"roses are red","tags":["flower","color"]},   +
+--  |            |                    |  {"id":2,"concept":"violets are blue","tags":["flower","color"]}]
+CREATE VIEW pairing_concepts AS
+	SELECT id, created_at, thoughts,
+		(SELECT json_agg(t) FROM
+			(SELECT concepts.id, concept,
+				ARRAY(SELECT tag FROM tags WHERE concept_id=concepts.id) AS tags
+			FROM concepts WHERE id IN (concept1_id, concept2_id)
+			ORDER BY id ASC)
+		t) AS concepts
+	FROM pairings;
+
 -- strip all line breaks, tabs, and spaces around concept before storing
 CREATE FUNCTION clean_concept() RETURNS TRIGGER AS $$
 BEGIN
@@ -62,44 +86,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- SELECT * FROM pairing_concepts WHERE id=1;
---id| created_at |      thoughts      |                             concepts                              
-----+------------+--------------------+-------------------------------------------------------------------
---1 | 2015-01-18 | describing flowers | [{"id":1,"concept":"roses are red","tags":["flower","color"]},   +
---  |            |                    |  {"id":2,"concept":"violets are blue","tags":["flower","color"]}]
-CREATE VIEW pairing_concepts AS
-	SELECT id, created_at, thoughts,
-		(SELECT json_agg(t) FROM
-			(SELECT concepts.id, concept,
-				ARRAY(SELECT tag FROM tags WHERE concept_id=concepts.id) AS tags
-			FROM concepts WHERE id IN (concept1_id, concept2_id)
-			ORDER BY id ASC)
-		t) AS concepts
-	FROM pairings;
-
-BEGIN;
-INSERT INTO concepts (concept) VALUES ('roses are red');
-INSERT INTO concepts (concept) VALUES ('violets are blue');
-INSERT INTO concepts (concept) VALUES ('sugar is sweet');
-INSERT INTO tags VALUES (1, 'flower');
-INSERT INTO tags VALUES (2, 'flower');
-INSERT INTO tags VALUES (1, 'color');
-INSERT INTO tags VALUES (2, 'color');
-INSERT INTO tags VALUES (3, 'flavor');
-INSERT INTO pairings (concept1_id, concept2_id, thoughts) VALUES (1, 2, 'describing flowers');
-COMMIT;
-
 -- USAGE: SELECT mime, js FROM get_concept(123);
 -- JSON format for all *_concept functions below:
--- {"id":1,"created_at":"2015-01-17","concept":"roses are red","tags":("flower","color")}
+-- {"id":1,"created_at":"2015-01-17","concept":"roses are red","tags":["flower","color"]}
 CREATE FUNCTION get_concept(integer, OUT mime text, OUT js text) AS $$
 BEGIN
 	mime := 'application/json';
-	SELECT row_to_json(co) INTO js FROM
-		(SELECT id, created_at, concept,
-			(SELECT array_to_json(array(
-				SELECT tag FROM tags WHERE concept_id = concepts.id)) AS tags)
-		FROM concepts WHERE id = $1) co;
+	SELECT row_to_json(r) INTO js FROM
+		(SELECT * FROM concept_tags WHERE id = $1) r;
 
 	IF js IS NULL THEN
 		mime := 'application/problem+json';
@@ -114,11 +108,8 @@ $$ LANGUAGE plpgsql;
 CREATE FUNCTION get_concepts(integer[], OUT mime text, OUT js text) AS $$
 BEGIN
 	mime := 'application/json';
-	SELECT json_agg(co) INTO js FROM
-		(SELECT id, created_at, concept,
-			(SELECT array_to_json(array(
-				SELECT tag FROM tags WHERE concept_id = concepts.id)) AS tags)
-		FROM concepts WHERE id = ANY($1) ORDER BY id ASC) co;
+	SELECT json_agg(r) INTO js FROM
+		(SELECT * FROM concept_tags WHERE id = ANY($1)) r;
 	IF js IS NULL THEN
 		js := array_to_json(array[]::text[]);
 	END IF;
@@ -271,6 +262,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- USAGE: SELECT mime, js FROM create_pairing();
+-- TODO: what to do when there are no pairings left?
 CREATE FUNCTION create_pairing(OUT mime text, OUT js text) AS $$
 DECLARE
 	pid integer;
@@ -315,4 +307,16 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+
+BEGIN;
+INSERT INTO concepts (concept) VALUES ('roses are red');
+INSERT INTO concepts (concept) VALUES ('violets are blue');
+INSERT INTO concepts (concept) VALUES ('sugar is sweet');
+INSERT INTO tags VALUES (1, 'flower');
+INSERT INTO tags VALUES (2, 'flower');
+INSERT INTO tags VALUES (1, 'color');
+INSERT INTO tags VALUES (2, 'color');
+INSERT INTO tags VALUES (3, 'flavor');
+INSERT INTO pairings (concept1_id, concept2_id, thoughts) VALUES (1, 2, 'describing flowers');
+COMMIT;
 

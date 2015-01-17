@@ -1,14 +1,11 @@
 -- USAGE: SELECT mime, js FROM get_concept(123);
 -- JSON format for all *_concept functions below:
--- {"id":1,"created_at":"2015-01-17","concept":"roses are red","tags":("flower","color")}
+-- {"id":1,"created_at":"2015-01-17","concept":"roses are red","tags":["flower","color"]}
 CREATE FUNCTION get_concept(integer, OUT mime text, OUT js text) AS $$
 BEGIN
 	mime := 'application/json';
-	SELECT row_to_json(co) INTO js FROM
-		(SELECT id, created_at, concept,
-			(SELECT array_to_json(array(
-				SELECT tag FROM tags WHERE concept_id = concepts.id)) AS tags)
-		FROM concepts WHERE id = $1) co;
+	SELECT row_to_json(r) INTO js FROM
+		(SELECT * FROM concept_tags WHERE id = $1) r;
 NOTFOUND
 END;
 $$ LANGUAGE plpgsql;
@@ -18,11 +15,8 @@ $$ LANGUAGE plpgsql;
 CREATE FUNCTION get_concepts(integer[], OUT mime text, OUT js text) AS $$
 BEGIN
 	mime := 'application/json';
-	SELECT json_agg(co) INTO js FROM
-		(SELECT id, created_at, concept,
-			(SELECT array_to_json(array(
-				SELECT tag FROM tags WHERE concept_id = concepts.id)) AS tags)
-		FROM concepts WHERE id = ANY($1) ORDER BY id ASC) co;
+	SELECT json_agg(r) INTO js FROM
+		(SELECT * FROM concept_tags WHERE id = ANY($1)) r;
 	IF js IS NULL THEN
 		js := array_to_json(array[]::text[]);
 	END IF;
