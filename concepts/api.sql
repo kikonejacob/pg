@@ -8,6 +8,7 @@ BEGIN
 			(SELECT array_to_json(array(
 				SELECT tag FROM tags WHERE concept_id = $1)) AS tags)
 		FROM concepts WHERE id = $1) co;
+_NOTFOUND
 END;
 $$ LANGUAGE plpgsql;
 

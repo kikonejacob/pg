@@ -82,6 +82,8 @@ INSERT INTO tags VALUES (3, 'flavor');
 INSERT INTO pairings (concept1_id, concept2_id, thoughts) VALUES (1, 2, 'describing flowers');
 COMMIT;
 
+-- USAGE: SELECT mime, js FROM get_concept(123);
+-- {"id":1,"created_at":"2015-01-17","concept":"roses are red","tags":("flower","color")}
 CREATE FUNCTION get_concept(integer, OUT mime text, OUT js text) AS $$
 BEGIN
 	mime := 'application/json';
@@ -90,6 +92,12 @@ BEGIN
 			(SELECT array_to_json(array(
 				SELECT tag FROM tags WHERE concept_id = $1)) AS tags)
 		FROM concepts WHERE id = $1) co;
+
+	IF js IS NULL THEN
+		mime := 'application/problem+json';
+		js := '{"type": "about:blank", "title": "Not Found", "status": 404}';
+	END IF;
+
 END;
 $$ LANGUAGE plpgsql;
 

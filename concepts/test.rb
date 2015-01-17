@@ -60,5 +60,14 @@ class SqlTest < Minitest::Test
 		assert_equal %w(color flower), js['tags'].sort
 		assert_equal 'roses are red', js['concept']
 	end
+
+	def test_get_concept_404
+		res = DB.exec("SELECT mime, js FROM get_concept(999)")
+		js = JSON.parse(res[0]['js'])
+		assert_equal 'application/problem+json', res[0]['mime']
+		assert_equal 'about:blank', js['type']
+		assert_equal 'Not Found', js['title']
+		assert_equal 404, js['status']
+	end
 end
 
