@@ -45,13 +45,6 @@ class SqlTest < Minitest::Test
 		assert res[0]['concept2_id'].to_i > 0
 	end
 
-	def test_tag_both
-		res = DB.exec("SELECT * FROM tag_both(2, 3, ' GREAT \t ')")
-		assert_equal 5, res.ntuples
-		assert res.find {|x| x['concept_id'] == '2' && x['tag'] == 'great' }
-		assert res.find {|x| x['concept_id'] == '3' && x['tag'] == 'great' }
-	end
-
 	def test_get_concept
 		res = DB.exec("SELECT mime, js FROM get_concept(1)")
 		js = JSON.parse(res[0]['js'])
@@ -134,6 +127,32 @@ class SqlTest < Minitest::Test
 		js = JSON.parse(res[0]['js'])
 		assert_equal 'sugar is sweet', js['concept']
 		assert_equal %w(flavor juicy), js['tags'].sort
+	end
+
+	def test_get_concepts
+		res = DB.exec("SELECT * FROM get_concepts(array[3, 1])")
+		js = JSON.parse(res[0]['js'])
+		assert_instance_of Array, js
+		assert_equal 2, js.size
+		assert_equal 1, js[0]['id']
+		assert_equal 3, js[1]['id']
+		assert_equal %w{color flower}, js[0]['tags'].sort
+		assert_equal %w{flavor}, js[1]['tags']
+		res = DB.exec("SELECT * FROM get_concepts(array[99, 123])")
+		assert_equal 'application/problem+json', res[0]['mime']
+		js = JSON.parse(res[0]['js'])
+		assert_equal 'Not Found', js['title']
+	end
+
+	def test_tag_concepts
+		res = DB.exec("SELECT * FROM tag_concepts(3, 2, 'noroses')")
+		js = JSON.parse(res[0]['js'])
+		assert_instance_of Array, js
+		assert_equal 2, js.size
+		assert_equal 2, js[0]['id']
+		assert_equal 3, js[1]['id']
+		assert_equal %w{color flower noroses}, js[0]['tags'].sort
+		assert_equal %w{flavor noroses}, js[1]['tags']
 	end
 end
 

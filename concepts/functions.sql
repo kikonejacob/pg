@@ -31,11 +31,3 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- insert the same tag for both concept ids
-CREATE FUNCTION tag_both(integer, integer, text) RETURNS SETOF tags AS $$
-BEGIN
-	INSERT INTO tags VALUES ($1, $3);
-	INSERT INTO tags VALUES ($2, $3);
-	RETURN QUERY SELECT * FROM tags WHERE concept_id IN ($1, $2);
-END;
-$$ LANGUAGE plpgsql;

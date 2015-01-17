@@ -7,8 +7,22 @@ BEGIN
 	SELECT row_to_json(co) INTO js FROM
 		(SELECT id, created_at, concept,
 			(SELECT array_to_json(array(
-				SELECT tag FROM tags WHERE concept_id = $1)) AS tags)
+				SELECT tag FROM tags WHERE concept_id = concepts.id)) AS tags)
 		FROM concepts WHERE id = $1) co;
+NOTFOUND
+END;
+$$ LANGUAGE plpgsql;
+
+-- give it an array of concept.ids.  Keep JSON format same as get_concept, but in array.
+-- If none found, gives same 404 error. TODO: return empty array
+CREATE FUNCTION get_concepts(int[], OUT mime text, OUT js text) AS $$
+BEGIN
+	mime := 'application/json';
+	SELECT json_agg(co) INTO js FROM
+		(SELECT id, created_at, concept,
+			(SELECT array_to_json(array(
+				SELECT tag FROM tags WHERE concept_id = concepts.id)) AS tags)
+		FROM concepts WHERE id = ANY($1) ORDER BY id ASC) co;
 NOTFOUND
 END;
 $$ LANGUAGE plpgsql;
@@ -62,7 +76,7 @@ ERRVARS
 BEGIN
 	INSERT INTO tags (concept_id, tag) VALUES ($1, $3);
 	INSERT INTO tags (concept_id, tag) VALUES ($2, $3);
-	-- TODO: probably don't need tag_both
+	SELECT x.mime, x.js INTO mime, js FROM get_concepts(array[$1, $2]) x;
 ERRCATCH
 END;
 $$ LANGUAGE plpgsql;
