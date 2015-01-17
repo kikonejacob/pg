@@ -69,5 +69,34 @@ class SqlTest < Minitest::Test
 		assert_equal 'Not Found', js['title']
 		assert_equal 404, js['status']
 	end
+
+	def test_create_concept
+		res = DB.exec("SELECT mime, js FROM create_concept(' River running ')")
+		assert_equal 'application/json', res[0]['mime']
+		js = JSON.parse(res[0]['js'])
+		assert_equal 4, js['id']
+		assert_equal 'River running', js['concept']
+		assert_equal [], js['tags']
+	end
+
+	def test_update_concept
+		res = DB.exec("SELECT mime, js FROM update_concept(3, 'sugar is sticky ')")
+		assert_equal 'application/json', res[0]['mime']
+		js = JSON.parse(res[0]['js'])
+		assert_equal 3, js['id']
+		assert_equal 'sugar is sticky', js['concept']
+		assert_equal %w(flavor), js['tags']
+	end
+
+	def test_delete_concept
+		res = DB.exec("SELECT mime, js FROM delete_concept(1)")
+		assert_equal 'application/json', res[0]['mime']
+		js = JSON.parse(res[0]['js'])
+		assert_equal 'roses are red', js['concept']
+		res = DB.exec("SELECT mime, js FROM delete_concept(1)")
+		assert_equal 'application/problem+json', res[0]['mime']
+		js = JSON.parse(res[0]['js'])
+		assert_equal 'Not Found', js['title']
+	end
 end
 

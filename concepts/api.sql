@@ -1,4 +1,5 @@
 -- USAGE: SELECT mime, js FROM get_concept(123);
+-- JSON format for all *_concept functions below:
 -- {"id":1,"created_at":"2015-01-17","concept":"roses are red","tags":("flower","color")}
 CREATE FUNCTION get_concept(integer, OUT mime text, OUT js text) AS $$
 BEGIN
@@ -11,4 +12,31 @@ BEGIN
 _NOTFOUND
 END;
 $$ LANGUAGE plpgsql;
+
+-- USAGE: SELECT mime, js FROM create_concept('some text here');
+CREATE FUNCTION create_concept(text, OUT mime text, OUT js text) AS $$
+DECLARE
+	new_id integer;
+BEGIN
+	INSERT INTO concepts(concept) VALUES ($1) RETURNING id INTO new_id;
+	SELECT x.mime, x.js INTO mime, js FROM get_concept(new_id) x;
+END;
+$$ LANGUAGE plpgsql;
+
+-- USAGE: SELECT mime, js FROM update_concept(123, 'new text here');
+CREATE FUNCTION update_concept(integer, text, OUT mime text, OUT js text) AS $$
+BEGIN
+	UPDATE concepts SET concept = $2 WHERE id = $1;
+	SELECT x.mime, x.js INTO mime, js FROM get_concept($1) x;
+END;
+$$ LANGUAGE plpgsql;
+
+-- USAGE: SELECT mime, js FROM delete_concept(123);
+CREATE FUNCTION delete_concept(integer, OUT mime text, OUT js text) AS $$
+BEGIN
+	SELECT x.mime, x.js INTO mime, js FROM get_concept($1) x;
+	DELETE FROM concepts WHERE id = $1;
+END;
+$$ LANGUAGE plpgsql;
+
 
