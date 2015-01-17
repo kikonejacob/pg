@@ -128,5 +128,12 @@ class SqlTest < Minitest::Test
 		assert_match /not-null/, js['title']
 		assert_match /^Failing row/, js['detail']
 	end
+
+	def test_tag_concept
+		res = DB.exec("SELECT mime, js FROM tag_concept(3, ' JUICY ')")
+		js = JSON.parse(res[0]['js'])
+		assert_equal 'sugar is sweet', js['concept']
+		assert_equal %w(flavor juicy), js['tags'].sort
+	end
 end
 

@@ -44,4 +44,26 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- USAGE: SELECT mime, js FROM tag_concept(123, 'newtag');
+CREATE FUNCTION tag_concept(integer, text, OUT mime text, OUT js text) AS $$
+DECLARE
+_ERRVARS
+BEGIN
+	INSERT INTO tags (concept_id, tag) VALUES ($1, $2);
+	SELECT x.mime, x.js INTO mime, js FROM get_concept($1) x;
+_ERRCATCH
+END;
+$$ LANGUAGE plpgsql;
+
+-- USAGE: SELECT mime, js FROM tag_concepts(13, 24, 'newtag');
+CREATE FUNCTION tag_concepts(integer, integer, text, OUT mime text, OUT js text) AS $$
+DECLARE
+_ERRVARS
+BEGIN
+	INSERT INTO tags (concept_id, tag) VALUES ($1, $3);
+	INSERT INTO tags (concept_id, tag) VALUES ($2, $3);
+	-- TODO: probably don't need tag_both
+_ERRCATCH
+END;
+$$ LANGUAGE plpgsql;
 

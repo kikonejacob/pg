@@ -165,4 +165,58 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- USAGE: SELECT mime, js FROM tag_concept(123, 'newtag');
+CREATE FUNCTION tag_concept(integer, text, OUT mime text, OUT js text) AS $$
+DECLARE
+
+	err_code text;
+	err_msg text;
+	err_detail text;
+	err_context text;
+
+BEGIN
+	INSERT INTO tags (concept_id, tag) VALUES ($1, $2);
+	SELECT x.mime, x.js INTO mime, js FROM get_concept($1) x;
+
+EXCEPTION
+	WHEN OTHERS THEN GET STACKED DIAGNOSTICS
+		err_code = RETURNED_SQLSTATE,
+		err_msg = MESSAGE_TEXT,
+		err_detail = PG_EXCEPTION_DETAIL,
+		err_context = PG_EXCEPTION_CONTEXT;
+	mime := 'application/problem+json';
+	js := '{"type": ' || to_json('http://www.postgresql.org/docs/9.3/static/errcodes-appendix.html#' || err_code)
+		|| ', "title": ' || to_json(err_msg)
+		|| ', "detail": ' || to_json(err_detail || err_context) || '}';
+
+END;
+$$ LANGUAGE plpgsql;
+
+-- USAGE: SELECT mime, js FROM tag_concepts(13, 24, 'newtag');
+CREATE FUNCTION tag_concepts(integer, integer, text, OUT mime text, OUT js text) AS $$
+DECLARE
+
+	err_code text;
+	err_msg text;
+	err_detail text;
+	err_context text;
+
+BEGIN
+	INSERT INTO tags (concept_id, tag) VALUES ($1, $3);
+	INSERT INTO tags (concept_id, tag) VALUES ($2, $3);
+	-- TODO: probably don't need tag_both
+
+EXCEPTION
+	WHEN OTHERS THEN GET STACKED DIAGNOSTICS
+		err_code = RETURNED_SQLSTATE,
+		err_msg = MESSAGE_TEXT,
+		err_detail = PG_EXCEPTION_DETAIL,
+		err_context = PG_EXCEPTION_CONTEXT;
+	mime := 'application/problem+json';
+	js := '{"type": ' || to_json('http://www.postgresql.org/docs/9.3/static/errcodes-appendix.html#' || err_code)
+		|| ', "title": ' || to_json(err_msg)
+		|| ', "detail": ' || to_json(err_detail || err_context) || '}';
+
+END;
+$$ LANGUAGE plpgsql;
 
