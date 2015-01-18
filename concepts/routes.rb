@@ -18,47 +18,47 @@ class ConceptsAPI < Sinatra::Base
 	end
 
 	get %r{\A/concepts/([0-9]+)\Z} do |id|
-		@res = DB.exec_params("SELECT mime, js FROM get_concept($1)", [id])
+		@res = DB.exec_params("SELECT * FROM get_concept($1)", [id])
 	end
 	
 	post '/concepts' do
-		@res = DB.exec_params("SELECT mime, js FROM create_concept($1)", [params[:concept]])
+		@res = DB.exec_params("SELECT * FROM create_concept($1)", [params[:concept]])
 	end
 	
 	put %r{\A/concepts/([0-9]+)\Z} do |id|
-		@res = DB.exec_params("SELECT mime, js FROM update_concept($1, $2)", [id, params[:concept]])
+		@res = DB.exec_params("SELECT * FROM update_concept($1, $2)", [id, params[:concept]])
 	end
 	
 	delete %r{\A/concepts/([0-9]+)\Z} do |id|
-		@res = DB.exec_params("SELECT mime, js FROM delete_concept($1)", [id])
+		@res = DB.exec_params("SELECT * FROM delete_concept($1)", [id])
 	end
 
 	post %r{\A/concepts/([0-9]+)/tag\Z} do |id|
-		@res = DB.exec_params("SELECT mime, js FROM tag_concept($1, $2)", [id, params[:tag]])
+		@res = DB.exec_params("SELECT * FROM tag_concept($1, $2)", [id, params[:tag]])
 	end
 	
 	get '/concepts/tag' do
-		@res = DB.exec_params("SELECT mime, js FROM concepts_tagged($1)", [params[:tag]])
+		@res = DB.exec_params("SELECT * FROM concepts_tagged($1)", [params[:tag]])
 	end
 	
 	get %r{\A/pairings/([0-9]+)\Z} do |id|
-		@res = DB.exec_params("SELECT mime, js FROM get_pairing($1)", [id])
+		@res = DB.exec_params("SELECT * FROM get_pairing($1)", [id])
 	end
 	
 	post '/pairings' do
-		@res = DB.exec("SELECT mime, js FROM create_pairing()")
+		@res = DB.exec("SELECT * FROM create_pairing()")
 	end
 	
 	put %r{\A/pairings/([0-9]+)\Z} do |id|
-		@res = DB.exec_params("SELECT mime, js FROM update_pairing($1, $2)", [id, params[:thoughts]])
+		@res = DB.exec_params("SELECT * FROM update_pairing($1, $2)", [id, params[:thoughts]])
 	end
 	
 	delete %r{\A/pairings/([0-9]+)\Z} do |id|
-		@res = DB.exec_params("SELECT mime, js FROM delete_pairing($1)", [id])
+		@res = DB.exec_params("SELECT * FROM delete_pairing($1)", [id])
 	end
 
 	post %r{\A/pairings/([0-9]+)/tag\Z} do |id|
-		@res = DB.exec_params("SELECT mime, js FROM tag_pairing($1, $2)", [id, params[:tag]])
+		@res = DB.exec_params("SELECT * FROM tag_pairing($1, $2)", [id, params[:tag]])
 	end
 	
 end
