@@ -65,18 +65,6 @@ ERRCATCH
 END;
 $$ LANGUAGE plpgsql;
 
--- USAGE: SELECT mime, js FROM tag_concepts(13, 24, 'newtag');
-CREATE FUNCTION tag_concepts(integer, integer, text, OUT mime text, OUT js text) AS $$
-DECLARE
-ERRVARS
-BEGIN
-	INSERT INTO tags (concept_id, tag) VALUES ($1, $3);
-	INSERT INTO tags (concept_id, tag) VALUES ($2, $3);
-	SELECT x.mime, x.js INTO mime, js FROM get_concepts(array[$1, $2]) x;
-ERRCATCH
-END;
-$$ LANGUAGE plpgsql;
-
 -- USAGE: SELECT mime, js FROM concepts_tagged('tagname');
 -- Returns array of concepts or empty array if none found.
 CREATE FUNCTION concepts_tagged(text, OUT mime text, OUT js text) AS $$
@@ -129,4 +117,16 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- USAGE: SELECT mime, js FROM tag_pairing(2, 'newtag');
+-- Adds that tag to both concepts in the pair
+CREATE FUNCTION tag_pairing(integer, text, OUT mime text, OUT js text) AS $$
+DECLARE
+ERRVARS
+BEGIN
+	INSERT INTO tags SELECT concept1_id, $2 FROM pairings WHERE id = $1;
+	INSERT INTO tags SELECT concept2_id, $2 FROM pairings WHERE id = $1;
+	SELECT x.mime, x.js INTO mime, js FROM get_pairing($1) x;
+ERRCATCH
+END;
+$$ LANGUAGE plpgsql;
 

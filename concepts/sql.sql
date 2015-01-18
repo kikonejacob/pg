@@ -206,34 +206,6 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
--- USAGE: SELECT mime, js FROM tag_concepts(13, 24, 'newtag');
-CREATE FUNCTION tag_concepts(integer, integer, text, OUT mime text, OUT js text) AS $$
-DECLARE
-
-	err_code text;
-	err_msg text;
-	err_detail text;
-	err_context text;
-
-BEGIN
-	INSERT INTO tags (concept_id, tag) VALUES ($1, $3);
-	INSERT INTO tags (concept_id, tag) VALUES ($2, $3);
-	SELECT x.mime, x.js INTO mime, js FROM get_concepts(array[$1, $2]) x;
-
-EXCEPTION
-	WHEN OTHERS THEN GET STACKED DIAGNOSTICS
-		err_code = RETURNED_SQLSTATE,
-		err_msg = MESSAGE_TEXT,
-		err_detail = PG_EXCEPTION_DETAIL,
-		err_context = PG_EXCEPTION_CONTEXT;
-	mime := 'application/problem+json';
-	js := '{"type": ' || to_json('http://www.postgresql.org/docs/9.3/static/errcodes-appendix.html#' || err_code)
-		|| ', "title": ' || to_json(err_msg)
-		|| ', "detail": ' || to_json(err_detail || err_context) || '}';
-
-END;
-$$ LANGUAGE plpgsql;
-
 -- USAGE: SELECT mime, js FROM concepts_tagged('tagname');
 -- Returns array of concepts or empty array if none found.
 CREATE FUNCTION concepts_tagged(text, OUT mime text, OUT js text) AS $$
@@ -307,6 +279,34 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- USAGE: SELECT mime, js FROM tag_pairing(2, 'newtag');
+-- Adds that tag to both concepts in the pair
+CREATE FUNCTION tag_pairing(integer, text, OUT mime text, OUT js text) AS $$
+DECLARE
+
+	err_code text;
+	err_msg text;
+	err_detail text;
+	err_context text;
+
+BEGIN
+	INSERT INTO tags SELECT concept1_id, $2 FROM pairings WHERE id = $1;
+	INSERT INTO tags SELECT concept2_id, $2 FROM pairings WHERE id = $1;
+	SELECT x.mime, x.js INTO mime, js FROM get_pairing($1) x;
+
+EXCEPTION
+	WHEN OTHERS THEN GET STACKED DIAGNOSTICS
+		err_code = RETURNED_SQLSTATE,
+		err_msg = MESSAGE_TEXT,
+		err_detail = PG_EXCEPTION_DETAIL,
+		err_context = PG_EXCEPTION_CONTEXT;
+	mime := 'application/problem+json';
+	js := '{"type": ' || to_json('http://www.postgresql.org/docs/9.3/static/errcodes-appendix.html#' || err_code)
+		|| ', "title": ' || to_json(err_msg)
+		|| ', "detail": ' || to_json(err_detail || err_context) || '}';
+
+END;
+$$ LANGUAGE plpgsql;
 
 BEGIN;
 INSERT INTO concepts (concept) VALUES ('roses are red');
