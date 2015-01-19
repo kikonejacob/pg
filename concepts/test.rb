@@ -40,9 +40,18 @@ class SqlTest < Minitest::Test
 
 	def test_new_pairing
 		res = DB.exec("SELECT * FROM new_pairing()")
-		assert res[0]['id'].to_i > 1
-		assert res[0]['concept1_id'].to_i > 0
-		assert res[0]['concept2_id'].to_i > 0
+		assert_equal '2', res[0]['id']
+		pair2 = [res[0]['concept1_id'], res[0]['concept2_id']].sort
+		refute_equal %w(1 2), pair2
+		res = DB.exec("SELECT * FROM new_pairing()")
+		assert_equal '3', res[0]['id']
+		pair3 = [res[0]['concept1_id'], res[0]['concept2_id']].sort
+		refute_equal %w(1 2), pair3
+		refute_equal pair2, pair3
+		err = assert_raises PG::RaiseException do
+			DB.exec("SELECT * FROM new_pairing()")
+		end
+		assert err.message.include? 'no unpaired concepts'
 	end
 
 	def test_get_concept
