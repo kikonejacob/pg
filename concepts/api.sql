@@ -5,7 +5,7 @@ CREATE FUNCTION get_concept(integer, OUT mime text, OUT js text) AS $$
 BEGIN
 	mime := 'application/json';
 	SELECT row_to_json(r) INTO js FROM
-		(SELECT * FROM concept_tags WHERE id = $1) r;
+		(SELECT * FROM concepts_view WHERE id = $1) r;
 NOTFOUND
 END;
 $$ LANGUAGE plpgsql;
@@ -16,7 +16,7 @@ CREATE FUNCTION get_concepts(integer[], OUT mime text, OUT js text) AS $$
 BEGIN
 	mime := 'application/json';
 	SELECT json_agg(r) INTO js FROM
-		(SELECT * FROM concept_tags WHERE id = ANY($1)) r;
+		(SELECT * FROM concepts_view WHERE id = ANY($1)) r;
 	IF js IS NULL THEN
 		js := array_to_json(array[]::text[]);
 	END IF;
@@ -82,7 +82,7 @@ CREATE FUNCTION get_pairing(integer, OUT mime text, OUT js text) AS $$
 BEGIN
 	mime := 'application/json';
 	SELECT row_to_json(r) INTO js FROM
-		(SELECT * FROM pairing_concepts WHERE id = $1) r;
+		(SELECT * FROM pairings_view WHERE id = $1) r;
 NOTFOUND
 END;
 $$ LANGUAGE plpgsql;

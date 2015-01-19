@@ -15,35 +15,33 @@ CREATE TABLE tags(
 	primary key (concept_id, tag)
 );
 
--- TODO: check concept1_id and concept2_id are not equal
--- TODO: How to make 1/2 unique in any order?
--- TODO: concept1_id < concept2_id ?  whole 'nother structure?
 CREATE TABLE pairings (
 	id serial primary key,
 	created_at date not null default current_date,
 	concept1_id integer not null references concepts(id) on delete cascade,
 	concept2_id integer not null references concepts(id) on delete cascade,
-	-- unique (concept1_id, concept2_id),
+	check (concept1_id != concept2_id),
+	unique (concept1_id, concept2_id),
 	thoughts text
 );
 
 COMMIT;
 
--- SELECT * FROM concept_tags WHERE id = 1;
+-- SELECT * FROM concepts_view WHERE id = 1;
 --id| created_at |    concept    |      tags      
 ----+------------+---------------+----------------
 --1 | 2015-01-18 | roses are red | {flower,color}
-CREATE VIEW concept_tags AS
+CREATE VIEW concepts_view AS
 	SELECT id, created_at, concept,
 		array(SELECT tag FROM tags WHERE concept_id = concepts.id) AS tags
 	FROM concepts;
 
--- SELECT * FROM pairing_concepts WHERE id=1;
+-- SELECT * FROM pairings_view WHERE id=1;
 --id| created_at |      thoughts      |                             concepts                              
 ----+------------+--------------------+-------------------------------------------------------------------
 --1 | 2015-01-18 | describing flowers | [{"id":1,"concept":"roses are red","tags":["flower","color"]},   +
 --  |            |                    |  {"id":2,"concept":"violets are blue","tags":["flower","color"]}]
-CREATE VIEW pairing_concepts AS
+CREATE VIEW pairings_view AS
 	SELECT id, created_at, thoughts,
 		(SELECT json_agg(t) FROM
 			(SELECT concepts.id, concept,
@@ -98,7 +96,7 @@ CREATE FUNCTION get_concept(integer, OUT mime text, OUT js text) AS $$
 BEGIN
 	mime := 'application/json';
 	SELECT row_to_json(r) INTO js FROM
-		(SELECT * FROM concept_tags WHERE id = $1) r;
+		(SELECT * FROM concepts_view WHERE id = $1) r;
 
 	IF js IS NULL THEN
 		mime := 'application/problem+json';
@@ -114,7 +112,7 @@ CREATE FUNCTION get_concepts(integer[], OUT mime text, OUT js text) AS $$
 BEGIN
 	mime := 'application/json';
 	SELECT json_agg(r) INTO js FROM
-		(SELECT * FROM concept_tags WHERE id = ANY($1)) r;
+		(SELECT * FROM concepts_view WHERE id = ANY($1)) r;
 	IF js IS NULL THEN
 		js := array_to_json(array[]::text[]);
 	END IF;
@@ -228,7 +226,7 @@ CREATE FUNCTION get_pairing(integer, OUT mime text, OUT js text) AS $$
 BEGIN
 	mime := 'application/json';
 	SELECT row_to_json(r) INTO js FROM
-		(SELECT * FROM pairing_concepts WHERE id = $1) r;
+		(SELECT * FROM pairings_view WHERE id = $1) r;
 
 	IF js IS NULL THEN
 		mime := 'application/problem+json';
