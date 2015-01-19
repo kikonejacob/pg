@@ -62,4 +62,10 @@ class SqlTest < Minitest::Test
 		assert_equal 't', res[0]['alive']
 	end
 
+	# now I can throw any garbage at it, and it only uses the good stuff
+	def test_garbage
+		res = DB.exec_params("SELECT * FROM update_legends($1, $2)", [1, '{"name": "bob", "dog": "fido", "alive": true, "age": 99}'])
+		assert_equal 'bob', res[0]['name']
+		assert_equal 't', res[0]['alive']
+	end
 end
