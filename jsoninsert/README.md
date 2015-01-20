@@ -11,9 +11,7 @@ Then it returns updated record.
 
 If any errors, insert is not performed.
 
-## status: not started
+## status: works!
 
-It's similar enough to [jsonupdate](https://github.com/sivers/pg/tree/master/jsonupdate) that let's perfect that one first, then do this.
-
-I don't know how to build a multi-column INSERT statement from a JSON hash.
+Like **jsonupdate3** directory here in this repository, I think the best approach is table-specific by upper-level API, using jsoninsert to handle some mundanes.
 
