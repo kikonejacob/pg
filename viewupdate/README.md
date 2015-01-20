@@ -18,3 +18,5 @@ Currently only updates people table, without knowing how to handle local columns
 
 Also don't know how to do inserts.
 
+See **jsonupdate3** directory in this repository, for a better approach.
+
