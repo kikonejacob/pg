@@ -3,7 +3,13 @@
 Trigger when changed, output all that blog post's comments as a JSON array, to a file in the filesystem.
 
 
-## status: please review. slight problem.
+## status: pity
 
-See TODO in sql.sql - about double-escaping of values with quotation marks - making for invalid JSON saved.
+See <https://wiki.postgresql.org/wiki/COPY#Caveats_with_import>.  Seems the backslash characters thing is unavoidable.  What a shame.
+
+So now I've added a Ruby script to pipe all output to, which reads the PostgreSQL output, removes the double slashes, removes the uri from hash while at it, and re-saves it using the uri in the filename.
+
+None of this would be needed if PostgreSQL could skip the escaping of the backslash.
+
+Other alternative is to use plPython untrusted.
 

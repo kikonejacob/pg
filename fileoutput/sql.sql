@@ -33,11 +33,12 @@ BEGIN
 	ELSE
 		u := OLD.uri;
 	END IF;
-	-- TODO: fix double-escaping of backslash creating invalid JSON
+	-- Double-escaping of backslash creating invalid JSON.
 	-- (JSON adds \ to escape ". COPY adds another \ to escape \)
-	EXECUTE 'COPY (SELECT json_agg(row_to_json(x)) FROM '
-	|| '(SELECT id, name, created_at, html FROM comments WHERE uri = ''' || u
-	|| ''' ORDER BY id) x) TO ''/tmp/' || u || '.json''';
+	-- Solution: pipe to PROGRAM that removes double-escaped \
+	EXECUTE format ('COPY (SELECT json_agg(row_to_json(x)) FROM '
+	|| '(SELECT id, uri, name, created_at, html FROM comments'
+	|| ' WHERE uri = %L ORDER BY id) x) TO PROGRAM ''/tmp/jparse.rb''', u);
 	RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;
