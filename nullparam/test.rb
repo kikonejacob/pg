@@ -20,5 +20,12 @@ class SqlTest < Minitest::Test
 		res = DB.exec("SELECT * FROM new_person('Dude', NULL)")
 		assert_equal nil, res[0]['rank']
 	end
+
+	def test_array
+		DB.exec("SELECT * FROM many_ranks(ARRAY[1,2,3])");
+		# needs IF NOT NULL to not crash:
+		DB.exec("SELECT * FROM many_ranks(NULL)");
+	end
 end
+
 

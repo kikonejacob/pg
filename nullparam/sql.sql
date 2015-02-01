@@ -16,5 +16,19 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- What about a FOREACH over a possibly NULL array?
+CREATE FUNCTION many_ranks(integer[]) RETURNS void AS $$
+DECLARE
+	arank integer;
+BEGIN
+	IF $1 IS NOT NULL THEN
+		FOREACH arank IN ARRAY $1 LOOP
+			INSERT INTO people(rank) VALUES (arank);
+		END LOOP;
+	END IF;
+	RETURN;
+END;
+$$ LANGUAGE plpgsql;
+
 COMMIT;
 
