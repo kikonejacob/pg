@@ -14,6 +14,12 @@ Minitest.after_run do
 end
 
 class SqlTest < Minitest::Test
+	def test_junk_ignored
+		res = DB.exec_params("SELECT * FROM update_people($1, $2)",
+			[1, '{"name": "Bill Wonka", "ignore": "this", "extra": "junk"}'])
+		assert_equal 'Bill Wonka', res[0]['name']
+	end
+
 	def test_regular_update
 		res = DB.exec_params("SELECT * FROM update_clients($1, $2)",
 			[1, '{"name": "Bill Wonka", "notes": "Gene, not Johnny"}'])

@@ -57,6 +57,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE FUNCTION update_people(integer, json) RETURNS SETOF people AS $$
+BEGIN
+	PERFORM jsonupdate('sivers.people', $1, $2,
+		cols2update('sivers', 'people', ARRAY['id']));
+	RETURN QUERY SELECT * FROM people WHERE id = $1;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE FUNCTION update_clients(integer, json) RETURNS SETOF client_view AS $$
 DECLARE
 	pid integer;
