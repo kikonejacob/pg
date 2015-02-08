@@ -19,6 +19,8 @@ class SqlTest < Minitest::Test
 		assert_equal 'New Person', res[0]['name']
 		assert_equal 'Address 2', res[0]['address']
 		assert_equal 'Singapore', res[0]['city']
+		assert_equal 'SG', res[0]['state']
+		assert_equal '02121', res[0]['postalcode']
 		assert_equal '1-312-920-1566', res[0]['phone']
 	end
 end
