@@ -3,7 +3,9 @@
 Trigger when changed, output all that blog post's comments as a JSON array, to a file in the filesystem.
 
 
-## status: pity
+## status: use notify instead, until plpython some day
+
+Use **notify** approach instead, in sibling directory here.
 
 See <https://wiki.postgresql.org/wiki/COPY#Caveats_with_import>.  Seems the backslash characters thing is unavoidable.  What a shame.
 
