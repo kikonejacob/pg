@@ -7,7 +7,7 @@ Instead of always tying them into my big [d50b](https://github.com/50pop/d50b) d
 
 # Context
 
-Very inspired by Rich Hickey's “[Simple Made Easy](http://www.infoq.com/presentations/Simple-Made-Easy)” talk. Especially these points:
+Very inspired by Rich Hickey's “[Simple Made Easy](https://www.youtube.com/watch?v=rI8tNMsozo0&t=45s)” talk. Especially these points:
 
 * Don't braid things together
 * Intertwined things must be considered together
